@@ -14,6 +14,26 @@ const FILTERS = [
   { id: "budget", label: "💰 Budget serré" },
 ];
 
+async function fetchYoutubeShort(query) {
+  const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const q = encodeURIComponent(query + " recette short");
+  const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + q + "&type=video&videoDuration=short&maxResults=1&key=" + apiKey;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const item = data.items?.[0];
+    if (!item) return null;
+    return {
+      videoId: item.id.videoId,
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.medium.url,
+      url: "https://www.youtube.com/shorts/" + item.id.videoId
+    };
+  } catch {
+    return null;
+  }
+}
+
 function DiffBadge({ d }) {
   const styles = {
     Facile: { bg: "#EAF3DE", color: "#27500A" },
@@ -24,25 +44,9 @@ function DiffBadge({ d }) {
   return <span style={{ fontSize: 11, padding: "2px 9px", background: s.bg, color: s.color, borderRadius: 99, whiteSpace: "nowrap" }}>{d}</span>;
 }
 
-async function fetchYoutubeShort(query) {
-  const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-  const q = encodeURIComponent(query + " recette short");
-  const url = ;
-  const res = await fetch(url);
-  const data = await res.json();
-  const item = data.items?.[0];
-  if (!item) return null;
-  return {
-    videoId: item.id.videoId,
-    title: item.snippet.title,
-    thumbnail: item.snippet.thumbnails.medium.url,
-    url: "https://www.youtube.com/shorts/" + item.id.videoId
-  };
-}
-
 function RecipeCard({ recipe, isAddition }) {
   const [video, setVideo] = useState(null);
-  const [loadingVideo, setLoadingVideo] = useState(false);
+  const [loadingVideo, setLoadingVideo] = useState(true);
   const accent = isAddition ? AMBER_MED : GREEN_MED;
   const query = encodeURIComponent((recipe.youtube_query || recipe.name) + " recette");
   const ttUrl = "https://www.tiktok.com/search?q=" + query;
@@ -56,7 +60,7 @@ function RecipeCard({ recipe, isAddition }) {
   }, [recipe.name]);
 
   return (
-    <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "1rem 1.25rem", borderLeft: `3px solid ${accent}` }}>
+    <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "1rem 1.25rem", borderLeft: "3px solid " + accent }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
         <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.35, margin: 0 }}>{recipe.name}</h3>
         <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center", paddingTop: 1 }}>
@@ -64,20 +68,25 @@ function RecipeCard({ recipe, isAddition }) {
           <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>{recipe.time}</span>
         </div>
       </div>
+
       <p style={{ fontSize: 13, color: "#555", lineHeight: 1.55, marginBottom: 8, marginTop: 0 }}>{recipe.description}</p>
+
       {recipe.used_ingredients?.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: "#888", marginRight: 2 }}>Utilise :</span>
           {recipe.used_ingredients.map((ing, i) => <span key={i} style={{ fontSize: 12, padding: "2px 8px", background: GREEN_LIGHT, color: GREEN_DARK, borderRadius: 99 }}>{ing}</span>)}
         </div>
       )}
+
       {isAddition && recipe.additional_ingredients?.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: "#888", marginRight: 2 }}>À ajouter :</span>
           {recipe.additional_ingredients.map((ing, i) => <span key={i} style={{ fontSize: 12, padding: "2px 8px", background: AMBER_LIGHT, color: AMBER_DARK, borderRadius: 99 }}>+ {ing}</span>)}
         </div>
       )}
-      {loadingVideo && <p style={{ fontSize: 12, color: "#aaa" }}>Recherche d'un Short YouTube...</p>}
+
+      {loadingVideo && <p style={{ fontSize: 12, color: "#aaa", marginBottom: 8 }}>Recherche d'un Short YouTube...</p>}
+
       {video && (
         <a href={video.url} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 10, textDecoration: "none" }}>
           <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "0.5px solid rgba(0,0,0,0.1)" }}>
@@ -92,6 +101,7 @@ function RecipeCard({ recipe, isAddition }) {
           <p style={{ fontSize: 12, color: "#555", margin: "4px 0 8px", lineHeight: 1.3 }}>{video.title}</p>
         </a>
       )}
+
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <a href={ttUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", background: "#000", textDecoration: "none", fontWeight: 500, padding: "4px 10px", borderRadius: 99 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52V7.15a4.85 4.85 0 0 1-1-.46z"/></svg>
@@ -131,9 +141,7 @@ function ShoppingList({ recipes }) {
         <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", margin: 0 }}>Liste de courses</h2>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
-        {allMissing.map((ing, i) => (
-          <span key={i} style={{ fontSize: 13, padding: "4px 10px", background: AMBER_LIGHT, color: AMBER_DARK, borderRadius: 99 }}>+ {ing}</span>
-        ))}
+        {allMissing.map((ing, i) => <span key={i} style={{ fontSize: 13, padding: "4px 10px", background: AMBER_LIGHT, color: AMBER_DARK, borderRadius: 99 }}>+ {ing}</span>)}
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={copyList} style={{ flex: 1, padding: "9px 0", background: copied ? GREEN_MED : "#f0f0ed", color: copied ? GREEN_LIGHT : "#333", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -177,15 +185,15 @@ export default function CookingApp() {
 
     const many = ingredients.length >= 4;
     const filterLabels = activeFilters.map(id => FILTERS.find(f => f.id === id)?.label.replace(/[🥦🌾⚡💰] /g, "")).filter(Boolean);
-    const filterNote = filterLabels.length ? `Contraintes obligatoires : ${filterLabels.join(", ")}.` : "";
+    const filterNote = filterLabels.length ? "Contraintes obligatoires : " + filterLabels.join(", ") + "." : "";
     const subsetNote = many ? "Propose des recettes avec des SOUS-ENSEMBLES DIFFÉRENTS d'ingrédients." : "";
 
     try {
-      const res = await fetch("/api/v1/messages", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+          "x-api-key": (import.meta.env.VITE_ANTHROPIC_API_KEY || "").trim(),
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true"
         },
@@ -195,13 +203,7 @@ export default function CookingApp() {
           system: "Tu es un chef cuisinier expert. Réponds UNIQUEMENT avec du JSON valide brut, sans markdown, sans backticks. Toujours en français.",
           messages: [{
             role: "user",
-            content: `Ingrédients disponibles : ${ingredients.join(", ")}. ${filterNote} ${subsetNote}
-
-Retourne un JSON avec :
-- "recipes_now" : ${many ? 4 : 3} recettes faisables. Chaque objet : { "name", "description" (1 phrase), "difficulty": "Facile"|"Moyen"|"Difficile", "time", "youtube_query", "used_ingredients": string[] }
-- "recipes_with_additions" : 3 recettes avec 1-3 ingrédients supplémentaires. Chaque objet : { "name", "description", "difficulty", "time", "youtube_query", "used_ingredients": string[], "additional_ingredients": string[] }
-
-Respecte absolument les contraintes si elles sont indiquées.`
+            content: "Ingrédients disponibles : " + ingredients.join(", ") + ". " + filterNote + " " + subsetNote + "\n\nRetourne un JSON avec :\n- \"recipes_now\" : " + (many ? 4 : 3) + " recettes faisables. Chaque objet : { \"name\", \"description\" (1 phrase), \"difficulty\": \"Facile\"|\"Moyen\"|\"Difficile\", \"time\", \"youtube_query\", \"used_ingredients\": string[] }\n- \"recipes_with_additions\" : 3 recettes avec 1-3 ingrédients supplémentaires. Chaque objet : { \"name\", \"description\", \"difficulty\", \"time\", \"youtube_query\", \"used_ingredients\": string[], \"additional_ingredients\": string[] }\n\nRespecte absolument les contraintes si indiquées."
           }]
         })
       });
@@ -248,7 +250,7 @@ Respecte absolument les contraintes si elles sont indiquées.`
         <p style={{ fontSize: 12, color: "#888", margin: "0 0 8px" }}>Filtres :</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {FILTERS.map(f => (
-            <button key={f.id} onClick={() => toggleFilter(f.id)} style={{ padding: "6px 12px", background: activeFilters.includes(f.id) ? GREEN_DARK : "#fff", color: activeFilters.includes(f.id) ? GREEN_LIGHT : "#444", border: `0.5px solid ${activeFilters.includes(f.id) ? GREEN_DARK : "rgba(0,0,0,0.15)"}`, borderRadius: 99, fontSize: 13, cursor: "pointer", fontWeight: activeFilters.includes(f.id) ? 600 : 400 }}>
+            <button key={f.id} onClick={() => toggleFilter(f.id)} style={{ padding: "6px 12px", background: activeFilters.includes(f.id) ? GREEN_DARK : "#fff", color: activeFilters.includes(f.id) ? GREEN_LIGHT : "#444", border: "0.5px solid " + (activeFilters.includes(f.id) ? GREEN_DARK : "rgba(0,0,0,0.15)"), borderRadius: 99, fontSize: 13, cursor: "pointer", fontWeight: activeFilters.includes(f.id) ? 600 : 400 }}>
               {f.label}
             </button>
           ))}
@@ -262,10 +264,10 @@ Respecte absolument les contraintes si elles sont indiquées.`
       {loading && (
         <div style={{ textAlign: "center", padding: "2rem 0", color: "#666" }}>
           <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 12 }}>
-            {[0, 0.2, 0.4].map((d, i) => <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: GREEN_MED, display: "inline-block", animation: `pulse 1.2s ease-in-out ${d}s infinite` }} />)}
+            {[0, 0.2, 0.4].map((d, i) => <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: GREEN_MED, display: "inline-block", animation: "pulse 1.2s ease-in-out " + d + "s infinite" }} />)}
           </div>
           <p style={{ fontSize: 14, margin: 0 }}>On cherche vos recettes...</p>
-          <style>{`@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}`}</style>
+          <style>{"@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}"}</style>
         </div>
       )}
 
