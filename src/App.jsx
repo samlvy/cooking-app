@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const GREEN_DARK = "#27500A";
 const GREEN_MED = "#3B6D11";
@@ -22,22 +22,8 @@ function savePrefs(prefs) {
   try { localStorage.setItem("cooking_prefs", JSON.stringify(prefs)); } catch {}
 }
 
-async function fetchYoutubeShort(query) {
-  const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-  const q = encodeURIComponent(query + " recette short");
-  const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + q + "&type=video&videoDuration=short&maxResults=1&key=" + apiKey;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const item = data.items?.[0];
-    if (!item) return null;
-    return {
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails.medium.url,
-      url: "https://www.youtube.com/shorts/" + item.id.videoId
-    };
-  } catch { return null; }
+function getYoutubeShortsUrl(query) {
+  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(query + " recette") + "&sp=EgIYAQ%3D%3D";
 }
 
 function DiffBadge({ d }) {
@@ -51,18 +37,12 @@ function DiffBadge({ d }) {
 }
 
 function RecipeCard({ recipe, isAddition, onFeedback }) {
-  const [video, setVideo] = useState(null);
-  const [loadingVideo, setLoadingVideo] = useState(true);
+
   const [feedback, setFeedback] = useState(null);
   const accent = isAddition ? AMBER_MED : GREEN_MED;
   const query = encodeURIComponent((recipe.youtube_query || recipe.name) + " recette");
 
-  useEffect(() => {
-    setLoadingVideo(true);
-    fetchYoutubeShort(recipe.youtube_query || recipe.name)
-      .then(v => setVideo(v))
-      .finally(() => setLoadingVideo(false));
-  }, [recipe.name]);
+
 
   function handleFeedback(type) {
     setFeedback(type);
@@ -95,25 +75,17 @@ function RecipeCard({ recipe, isAddition, onFeedback }) {
         </div>
       )}
 
-      {loadingVideo && <p style={{ fontSize: 12, color: "#aaa", marginBottom: 8 }}>Recherche d'un Short YouTube...</p>}
-
-      {video && (
-        <a href={video.url} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 10, textDecoration: "none" }}>
-          <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "0.5px solid rgba(0,0,0,0.1)" }}>
-            <img src={video.thumbnail} alt={video.title} style={{ width: "100%", display: "block" }} />
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 44, height: 44, background: "#FF0000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-              </div>
-            </div>
-            <div style={{ position: "absolute", top: 8, right: 8, background: "#FF0000", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>SHORTS</div>
-          </div>
-          <p style={{ fontSize: 12, color: "#555", margin: "4px 0 8px", lineHeight: 1.3 }}>{video.title}</p>
-        </a>
-      )}
+      <a href={getYoutubeShortsUrl(recipe.youtube_query || recipe.name)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 10, padding: "8px 14px", background: "#FF0000", color: "#fff", borderRadius: 8, textDecoration: "none", fontSize: 13, fontWeight: 600 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+        Voir sur YouTube Shorts
+      </a>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", gap: 8 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52V7.15a4.85 4.85 0 0 1-1-.46z"/></svg>
+          </a>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+          </a>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "#888" }}>Cette recette ?</span>
@@ -216,7 +188,7 @@ export default function CookingApp() {
 
     const prompt = "Ingredients disponibles : " + ingredients.join(", ") + ". "
       + filterNote + " " + subsetNote + " " + prefsNote
-      + " REGLE ABSOLUE : recipes_now doit contenir UNIQUEMENT des recettes faisables avec EXACTEMENT les ingredients listes, rien de plus. Si une recette necessite un ingredient non liste, elle va dans recipes_with_additions. Sois tres strict. Si quelqu un a des pates alimentaires, propose des plats de pates, pas de la patisserie. Utilise le bon sens culinaire."
+      + " Propose uniquement des recettes logiques et coherentes. Si quelqu un a des pates alimentaires, propose des plats de pates, pas de la patisserie. Utilise le bon sens culinaire."
       + " Retourne un JSON avec : \"recipes_now\" (" + (many ? 4 : 3) + " recettes, chaque objet : { name, description (1 phrase), difficulty: Facile|Moyen|Difficile, time, youtube_query, used_ingredients[] }) et \"recipes_with_additions\" (3 recettes avec 1-3 ingredients supplementaires, chaque objet : { name, description, difficulty, time, youtube_query, used_ingredients[], additional_ingredients[] }).";
 
     try {
