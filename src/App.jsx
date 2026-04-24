@@ -150,7 +150,7 @@ export default function CookingApp() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+          "x-api-key": (import.meta.env.VITE_ANTHROPIC_API_KEY || "").trim(),
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true"
         },
