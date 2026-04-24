@@ -1,0 +1,19 @@
+
+  VITE v8.0.10  ready in 296 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+cd cooking-app
+npm install
+cp ~/Downloads/cooking-app.jsx ~/Documents/cooking-app/src/App.jsx
+cp ~/Downloads/.env ~/Documents/cooking-app/.env
+npm run dev
+pwd
+ls
+cp ~/Downloads/cooking-app.jsx ~/Documents/cooking-app/src/App.jsx
+cat ~/Documents/cooking-app/src/App.jsx
+ls ~/Downloads/cooking-app.jsx
+curl -o ~/Documents/cooking-app/src/App.jsx https://pastebin.com/raw/...
+find /Users/samuellevy -name "cooking-app.jsx" 2>/dev/null
+
