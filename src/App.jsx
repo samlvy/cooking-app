@@ -222,7 +222,7 @@ export default function CookingApp() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: 660, margin: "0 auto", padding: "1.5rem 1rem", background: "#fafaf8", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: 660, margin: "0 auto", padding: "1.5rem 1rem", background: "#fafaf8", color: "#1a1a1a" }}, minHeight: "100vh" }}>
 
       <div style={{ marginBottom: "1.75rem" }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a", margin: "0 0 4px" }}>Qu'est-ce qu'on mange ?</h1>
@@ -298,4 +298,5 @@ export default function CookingApp() {
       )}
     </div>
   );
-}
+
+
