@@ -44,21 +44,9 @@ function DiffBadge({ d }) {
   return <span style={{ fontSize: 11, padding: "2px 9px", background: s.bg, color: s.color, borderRadius: 99, whiteSpace: "nowrap" }}>{d}</span>;
 }
 
-function RecipeCard({ recipe, isAddition, onLike }) {
+function RecipeCard({ recipe, isAddition }) {
   const [video, setVideo] = useState(null);
   const [loadingVideo, setLoadingVideo] = useState(true);
-  const [liked, setLiked] = useState(() => {
-    const likes = JSON.parse(localStorage.getItem("recipe_likes") || "{}");
-    return likes[recipe.name] || null;
-  });
-
-  function handleLike(val) {
-    const likes = JSON.parse(localStorage.getItem("recipe_likes") || "{}");
-    likes[recipe.name] = val;
-    localStorage.setItem("recipe_likes", JSON.stringify(likes));
-    setLiked(val);
-    onLike && onLike(recipe.name, val);
-  }
   const accent = isAddition ? AMBER_MED : GREEN_MED;
   const query = encodeURIComponent((recipe.youtube_query || recipe.name) + " recette");
   const ttUrl = "https://www.tiktok.com/search?q=" + query;
@@ -114,17 +102,6 @@ function RecipeCard({ recipe, isAddition, onLike }) {
         </a>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <span style={{ fontSize: 12, color: "#888" }}>Cette recette vous plait ?</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={() => handleLike("like")} style={{ padding: "4px 12px", background: liked === "like" ? "#EAF3DE" : "#f0f0ed", color: liked === "like" ? "#27500A" : "#666", border: "0.5px solid " + (liked === "like" ? "#3B6D11" : "rgba(0,0,0,0.12)"), borderRadius: 99, fontSize: 13, cursor: "pointer", fontWeight: liked === "like" ? 600 : 400 }}>
-            👍
-          </button>
-          <button onClick={() => handleLike("dislike")} style={{ padding: "4px 12px", background: liked === "dislike" ? "#FCEBEB" : "#f0f0ed", color: liked === "dislike" ? "#791F1F" : "#666", border: "0.5px solid " + (liked === "dislike" ? "#E24B4A" : "rgba(0,0,0,0.12)"), borderRadius: 99, fontSize: 13, cursor: "pointer", fontWeight: liked === "dislike" ? 600 : 400 }}>
-            👎
-          </button>
-        </div>
-      </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <a href={ttUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", background: "#000", textDecoration: "none", fontWeight: 500, padding: "4px 10px", borderRadius: 99 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52V7.15a4.85 4.85 0 0 1-1-.46z"/></svg>
@@ -226,17 +203,7 @@ export default function CookingApp() {
           system: "Tu es un chef cuisinier expert. Réponds UNIQUEMENT avec du JSON valide brut, sans markdown, sans backticks. Toujours en français.",
           messages: [{
             role: "user",
-            content: (() => {
-            const likes = JSON.parse(localStorage.getItem("recipe_likes") || "{}");
-            const liked_recipes = Object.entries(likes).filter(([,v]) => v === "like").map(([k]) => k);
-            const disliked_recipes = Object.entries(likes).filter(([,v]) => v === "dislike").map(([k]) => k);
-            const pref_note = liked_recipes.length || disliked_recipes.length ? "
-
-Préférences de l'utilisateur :
-" + (liked_recipes.length ? "- A AIMÉ ces recettes (propose des recettes similaires) : " + liked_recipes.join(", ") : "") + (disliked_recipes.length ? "
-- N'A PAS AIMÉ ces recettes (évite ce style) : " + disliked_recipes.join(", ") : "") : "";
-            return "Ingrédients disponibles : " + ingredients.join(", ") + pref_note;
-          })() + ". " + filterNote + " " + subsetNote + "\n\nRetourne un JSON avec :\n- \"recipes_now\" : " + (many ? 4 : 3) + " recettes faisables. Chaque objet : { \"name\", \"description\" (1 phrase), \"difficulty\": \"Facile\"|\"Moyen\"|\"Difficile\", \"time\", \"youtube_query\", \"used_ingredients\": string[] }\n- \"recipes_with_additions\" : 3 recettes avec 1-3 ingrédients supplémentaires. Chaque objet : { \"name\", \"description\", \"difficulty\", \"time\", \"youtube_query\", \"used_ingredients\": string[], \"additional_ingredients\": string[] }\n\nRespecte absolument les contraintes si indiquées."
+            content: "Ingrédients disponibles : " + ingredients.join(", ") + ". " + filterNote + " " + subsetNote + "\n\nRetourne un JSON avec :\n- \"recipes_now\" : " + (many ? 4 : 3) + " recettes faisables. Chaque objet : { \"name\", \"description\" (1 phrase), \"difficulty\": \"Facile\"|\"Moyen\"|\"Difficile\", \"time\", \"youtube_query\", \"used_ingredients\": string[] }\n- \"recipes_with_additions\" : 3 recettes avec 1-3 ingrédients supplémentaires. Chaque objet : { \"name\", \"description\", \"difficulty\", \"time\", \"youtube_query\", \"used_ingredients\": string[], \"additional_ingredients\": string[] }\n\nRespecte absolument les contraintes si indiquées."
           }]
         })
       });
