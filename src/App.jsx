@@ -231,7 +231,7 @@ export default function CookingApp() {
 
       <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: "1.25rem", marginBottom: "1rem" }}>
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <input type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === "Enter" && addIngredient()} placeholder="ex: poulet, tomates, ail..." style={{ flex: 1, padding: "8px 12px", border: "0.5px solid rgba(0,0,0,0.2)", borderRadius: 8, fontSize: 14, outline: "none", background: "#fafaf8" }} />
+          <input type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === "Enter" && addIngredient()} placeholder="ex: poulet, tomates, ail..." style={{ flex: 1, padding: "8px 12px", border: "0.5px solid rgba(0,0,0,0.2)", borderRadius: 8, fontSize: 14, outline: "none", background: "#fafaf8", color: "#1a1a1a" }} />
           <button onClick={addIngredient} style={{ padding: "0 16px", background: GREEN_MED, color: GREEN_LIGHT, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", height: 38 }}>+ Ajouter</button>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, minHeight: 32 }}>
