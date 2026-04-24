@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const GREEN_DARK = "#27500A";
 const GREEN_MED = "#3B6D11";
@@ -24,12 +24,36 @@ function DiffBadge({ d }) {
   return <span style={{ fontSize: 11, padding: "2px 9px", background: s.bg, color: s.color, borderRadius: 99, whiteSpace: "nowrap" }}>{d}</span>;
 }
 
+async function fetchYoutubeShort(query) {
+  const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const q = encodeURIComponent(query + " recette short");
+  const url = ;
+  const res = await fetch(url);
+  const data = await res.json();
+  const item = data.items?.[0];
+  if (!item) return null;
+  return {
+    videoId: item.id.videoId,
+    title: item.snippet.title,
+    thumbnail: item.snippet.thumbnails.medium.url,
+    url: "https://www.youtube.com/shorts/" + item.id.videoId
+  };
+}
+
 function RecipeCard({ recipe, isAddition }) {
+  const [video, setVideo] = useState(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
   const accent = isAddition ? AMBER_MED : GREEN_MED;
   const query = encodeURIComponent((recipe.youtube_query || recipe.name) + " recette");
-  const ytUrl = "https://www.youtube.com/results?search_query=" + query;
   const ttUrl = "https://www.tiktok.com/search?q=" + query;
   const igUrl = "https://www.instagram.com/explore/tags/" + encodeURIComponent((recipe.youtube_query || recipe.name).replace(/ /g, ""));
+
+  useEffect(() => {
+    setLoadingVideo(true);
+    fetchYoutubeShort(recipe.youtube_query || recipe.name)
+      .then(v => setVideo(v))
+      .finally(() => setLoadingVideo(false));
+  }, [recipe.name]);
 
   return (
     <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "1rem 1.25rem", borderLeft: `3px solid ${accent}` }}>
@@ -53,11 +77,22 @@ function RecipeCard({ recipe, isAddition }) {
           {recipe.additional_ingredients.map((ing, i) => <span key={i} style={{ fontSize: 12, padding: "2px 8px", background: AMBER_LIGHT, color: AMBER_DARK, borderRadius: 99 }}>+ {ing}</span>)}
         </div>
       )}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <a href={ytUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", background: "#FF0000", textDecoration: "none", fontWeight: 500, padding: "4px 10px", borderRadius: 99 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-          YouTube
+      {loadingVideo && <p style={{ fontSize: 12, color: "#aaa" }}>Recherche d'un Short YouTube...</p>}
+      {video && (
+        <a href={video.url} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 10, textDecoration: "none" }}>
+          <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "0.5px solid rgba(0,0,0,0.1)" }}>
+            <img src={video.thumbnail} alt={video.title} style={{ width: "100%", display: "block" }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 44, height: 44, background: "#FF0000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+            <div style={{ position: "absolute", top: 8, right: 8, background: "#FF0000", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>SHORTS</div>
+          </div>
+          <p style={{ fontSize: 12, color: "#555", margin: "4px 0 8px", lineHeight: 1.3 }}>{video.title}</p>
         </a>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <a href={ttUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", background: "#000", textDecoration: "none", fontWeight: 500, padding: "4px 10px", borderRadius: 99 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52V7.15a4.85 4.85 0 0 1-1-.46z"/></svg>
           TikTok
@@ -146,11 +181,11 @@ export default function CookingApp() {
     const subsetNote = many ? "Propose des recettes avec des SOUS-ENSEMBLES DIFFÉRENTS d'ingrédients." : "";
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": (import.meta.env.VITE_ANTHROPIC_API_KEY || "").trim(),
+          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true"
         },
