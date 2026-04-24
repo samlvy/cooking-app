@@ -15,11 +15,7 @@ const FILTERS = [
 ];
 
 function getShortsUrl(query) {
-  const q = encodeURIComponent(query + " recette");
-  const web = "https://www.youtube.com/results?search_query=" + q + "&sp=EgIYAQ%3D%3D";
-  const app = "youtube://" + q;
-  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-  return isMobile ? app : web;
+  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(query + " recette") + "&sp=EgIYAQ%3D%3D";
 }
 
 function loadPrefs() {
