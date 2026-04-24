@@ -216,7 +216,7 @@ export default function CookingApp() {
 
     const prompt = "Ingredients disponibles : " + ingredients.join(", ") + ". "
       + filterNote + " " + subsetNote + " " + prefsNote
-      + " Propose uniquement des recettes logiques et coherentes. Si quelqu un a des pates alimentaires, propose des plats de pates, pas de la patisserie. Utilise le bon sens culinaire."
+      + " REGLE ABSOLUE : recipes_now doit contenir UNIQUEMENT des recettes faisables avec EXACTEMENT les ingredients listes, rien de plus. Si une recette necessite un ingredient non liste, elle va dans recipes_with_additions. Sois tres strict. Si quelqu un a des pates alimentaires, propose des plats de pates, pas de la patisserie. Utilise le bon sens culinaire."
       + " Retourne un JSON avec : \"recipes_now\" (" + (many ? 4 : 3) + " recettes, chaque objet : { name, description (1 phrase), difficulty: Facile|Moyen|Difficile, time, youtube_query, used_ingredients[] }) et \"recipes_with_additions\" (3 recettes avec 1-3 ingredients supplementaires, chaque objet : { name, description, difficulty, time, youtube_query, used_ingredients[], additional_ingredients[] }).";
 
     try {
