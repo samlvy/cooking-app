@@ -195,7 +195,7 @@ export default function CookingApp() {
       if (data.error) throw new Error(data.error.message);
       const textBlock = data.content?.find(b => b.type === "text");
       if (!textBlock) throw new Error("Pas de contenu.");
-      const parsed = JSON.parse(textBlock.text);
+      const clean = textBlock.text.replace(/```json/g, "").replace(/```/g, "").trim(); const parsed = JSON.parse(clean);
       const ingLower = ingredients.map(i => i.toLowerCase());
       const strict = (parsed.recipes_now || []).filter(r => (r.used_ingredients || []).map(u => u.toLowerCase()).every(u => ingLower.some(i => u.includes(i) || i.includes(u))));
       const moved = (parsed.recipes_now || []).filter(r => !(r.used_ingredients || []).map(u => u.toLowerCase()).every(u => ingLower.some(i => u.includes(i) || i.includes(u)))).map(r => ({ ...r, additional_ingredients: (r.used_ingredients || []).filter(u => !ingLower.some(i => u.toLowerCase().includes(i) || i.includes(u.toLowerCase()))) }));
