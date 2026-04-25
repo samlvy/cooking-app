@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const GREEN_DARK = "#27500A";
 const GREEN_MED = "#3B6D11";
@@ -14,8 +14,25 @@ const FILTERS = [
   { id: "budget", label: "Budget serre" },
 ];
 
-function getShortsUrl(query) {
-  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(query + " recette") + "&sp=EgIYAQ%3D%3D";
+async function fetchShort(query) {
+  try {
+    const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+    const q = encodeURIComponent(query + " recette");
+    const res = await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + q + "&type=video&videoDuration=short&maxResults=1&key=" + apiKey);
+    const data = await res.json();
+    const id = data.items?.[0]?.id?.videoId;
+    if (!id) return null;
+    return { id, thumbnail: data.items[0].snippet.thumbnails.medium.url, title: data.items[0].snippet.title };
+  } catch { return null; }
+}
+
+function openShort(videoId) {
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  if (isIOS) { window.location.href = "youtube://shorts/" + videoId; setTimeout(() => { window.open("https://www.youtube.com/shorts/" + videoId, "_blank"); }, 500); }
+  else if (isAndroid) { window.location.href = "intent://shorts/" + videoId + "#Intent;package=com.google.android.youtube;scheme=https;end"; }
+  else { window.open("https://www.youtube.com/shorts/" + videoId, "_blank"); }
 }
 
 function loadPrefs() {
@@ -38,7 +55,12 @@ function DiffBadge({ d }) {
 
 function RecipeCard({ recipe, isAddition, onFeedback }) {
   const [feedback, setFeedback] = useState(null);
+  const [video, setVideo] = useState(null);
   const accent = isAddition ? AMBER_MED : GREEN_MED;
+
+  useEffect(() => {
+    fetchShort(recipe.youtube_query || recipe.name).then(v => setVideo(v));
+  }, [recipe.name]);
 
   function handleFeedback(type) {
     setFeedback(type);
@@ -68,10 +90,24 @@ function RecipeCard({ recipe, isAddition, onFeedback }) {
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <a href={getShortsUrl(recipe.youtube_query || recipe.name)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#FF0000", color: "#fff", borderRadius: 8, textDecoration: "none", fontSize: 13, fontWeight: 600 }}>
+        {video && (
+          <a href={"https://www.youtube.com/shorts/" + video.id} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 8, textDecoration: "none" }} onClick={e => { e.preventDefault(); openShort(video.id); }}>
+            <div style={{ position: "relative", borderRadius: 8, overflow: "hidden" }}>
+              <img src={video.thumbnail} alt={video.title} style={{ width: "100%", display: "block" }} />
+              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 44, height: 44, background: "#FF0000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+              <div style={{ position: "absolute", top: 8, right: 8, background: "#FF0000", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>SHORTS</div>
+            </div>
+            <p style={{ fontSize: 12, color: "#555", margin: "4px 0 0" }}>{video.title}</p>
+          </a>
+        )}
+        <button onClick={() => video ? openShort(video.id) : window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent((recipe.youtube_query || recipe.name) + " recette") + "&sp=EgIYAQ%3D%3D", "_blank")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#FF0000", color: "#fff", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-          Voir sur YouTube Shorts
-        </a>
+          {video ? "Ouvrir dans YouTube" : "Voir sur YouTube Shorts"}
+        </button>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "#888" }}>Cette recette ?</span>
           <button onClick={() => handleFeedback("like")} style={{ background: feedback === "like" ? GREEN_MED : "#f0f0ed", border: "none", borderRadius: 99, padding: "4px 10px", cursor: "pointer", fontSize: 14 }}>👍</button>
@@ -159,7 +195,7 @@ export default function CookingApp() {
       if (data.error) throw new Error(data.error.message);
       const textBlock = data.content?.find(b => b.type === "text");
       if (!textBlock) throw new Error("Pas de contenu.");
-      const clean = textBlock.text.replace(/```json/g, "").replace(/```/g, "").trim(); const parsed = JSON.parse(clean);
+      const parsed = JSON.parse(textBlock.text);
       const ingLower = ingredients.map(i => i.toLowerCase());
       const strict = (parsed.recipes_now || []).filter(r => (r.used_ingredients || []).map(u => u.toLowerCase()).every(u => ingLower.some(i => u.includes(i) || i.includes(u))));
       const moved = (parsed.recipes_now || []).filter(r => !(r.used_ingredients || []).map(u => u.toLowerCase()).every(u => ingLower.some(i => u.includes(i) || i.includes(u)))).map(r => ({ ...r, additional_ingredients: (r.used_ingredients || []).filter(u => !ingLower.some(i => u.toLowerCase().includes(i) || i.includes(u.toLowerCase()))) }));
