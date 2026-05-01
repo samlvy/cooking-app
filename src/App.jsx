@@ -18,7 +18,7 @@ async function fetchShort(query) {
   try {
     const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
     const q = encodeURIComponent(query + " recette #shorts");
-    const res = await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + q + "&type=video&videoDuration=short&maxResults=1&key=" + apiKey);
+    const res = await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + q + "&type=video&videoDuration=short&order=viewCount&maxResults=1&key=" + apiKey);
     const data = await res.json();
     const id = data.items?.[0]?.id?.videoId;
     if (!id) return null;
