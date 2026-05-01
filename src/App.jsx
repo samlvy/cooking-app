@@ -59,7 +59,7 @@ function RecipeCard({ recipe, isAddition, onFeedback }) {
   const accent = isAddition ? AMBER_MED : GREEN_MED;
 
   useEffect(() => {
-    fetchShort(recipe.youtube_query || recipe.name).then(v => setVideo(v));
+    fetchShort((recipe.used_ingredients || [recipe.name]).join(" ") + " recette simple").then(v => setVideo(v));
   }, [recipe.name]);
 
   function handleFeedback(type) {
